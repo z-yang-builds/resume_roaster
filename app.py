@@ -2,27 +2,33 @@ import streamlit as st
 from openai import OpenAI
 import os
 
-# Page Config
+# Page Configuration
 st.set_page_config(page_title="Resume Roaster", layout="wide")
 
 st.title("🔥 Resume Roaster")
 st.markdown("### Ruthless critique from a cynical Google Recruiter.")
 
-# 1. Try to get Key from Environment Variable (for your local terminal setup)
-api_key = os.getenv("OPENAI_API_KEY")
+# --- API Key Handling ---
+# 1. Try fetching from Streamlit Cloud Secrets (Production)
+if "OPENAI_API_KEY" in st.secrets:
+    api_key = st.secrets["OPENAI_API_KEY"]
+# 2. Try fetching from Local Environment Variables (Development)
+else:
+    api_key = os.getenv("OPENAI_API_KEY")
 
-# 2. Fallback: Ask for Key in Sidebar if not found
+# 3. Fallback: Request Key in Sidebar if not found
 if not api_key:
     api_key = st.sidebar.text_input("Enter OpenAI API Key", type="password")
 
 if not api_key:
     st.info("👈 Please enter your OpenAI API Key in the sidebar to continue.")
     st.stop()
+# ------------------------
 
-# Initialize Client
+# Initialize OpenAI Client
 client = OpenAI(api_key=api_key)
 
-# Layout: Two columns
+# UI Layout: Two columns
 col1, col2 = st.columns(2)
 
 with col1:
@@ -33,7 +39,7 @@ with col2:
     st.subheader("Job Description (Optional)")
     job_description = st.text_area("Paste the JD here (for context)...", height=400)
 
-# Button
+# Main Action Button
 if st.button("Roast My Resume 🚀", type="primary"):
     if not resume_text:
         st.error("Please paste your resume text first!")
@@ -76,7 +82,7 @@ if st.button("Roast My Resume 🚀", type="primary"):
             """
             
             try:
-                # Call OpenAI
+                # Call OpenAI API
                 response = client.chat.completions.create(
                     model="gpt-4o",
                     messages=[
@@ -85,8 +91,8 @@ if st.button("Roast My Resume 🚀", type="primary"):
                     ]
                 )
                 
-                # Display Result
-                st.success("Roast Complete! Brace yourself:")
+                # Display Results
+                st.success("Roast Complete! Analysis below:")
                 st.markdown("---")
                 st.markdown(response.choices[0].message.content)
                 
